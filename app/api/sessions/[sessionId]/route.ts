@@ -13,15 +13,17 @@ async function verifyToken(request: NextRequest) {
 }
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  request: NextRequest
 ) {
   try {
     const decodedToken = await verifyToken(request);
     const uid = decodedToken.uid;
-    const { sessionId } = params;
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId");
+if(!sessionId){
 
-    // Get the session document
+  return NextResponse.json({error:"server error"},{status:500})
+}
     const sessionDoc = await adminDb.collection('sessions').doc(sessionId).get();
 
     if (!sessionDoc.exists) {
