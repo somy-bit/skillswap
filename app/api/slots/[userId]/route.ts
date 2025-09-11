@@ -13,12 +13,17 @@ async function verifyToken(request: NextRequest) {
 }
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
+  request: NextRequest
 ) {
   try {
     await verifyToken(request);
-    const userId = params.userId;
+   
+     const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+
+    if(!userId){
+      return NextResponse.json({message:"unAuthorized"},{status:401})
+    }
     
     const slotsRef = adminDb.collection('slots').doc(userId);
     const doc = await slotsRef.get();
