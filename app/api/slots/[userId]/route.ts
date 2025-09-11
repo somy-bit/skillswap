@@ -1,0 +1,46 @@
+import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { NextRequest, NextResponse } from 'next/server';
+
+async function verifyToken(request: NextRequest) {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    throw new Error('No valid token provided');
+  }
+  
+  const token = authHeader.split('Bearer ')[1];
+  const decodedToken = await adminAuth.verifyIdToken(token);
+  return decodedToken;
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { userId: string } }
+) {
+  try {
+    await verifyToken(request);
+    const userId = params.userId;
+    
+    const slotsRef = adminDb.collection('slots').doc(userId);
+    const doc = await slotsRef.get();
+    
+    if (!doc.exists) {
+      return NextResponse.json([]);
+    }
+    
+    const data = doc.data();
+    const slots = data?.slots || [];
+    
+    // Filter out past slots
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const currentSlots = slots.filter((slot: any) => {
+      const slotDate = new Date(slot.date);
+      return slotDate >= today;
+    });
+    
+    return NextResponse.json(currentSlots);
+  } catch (error) {
+    console.error('Error fetching slots:', error);
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+}
