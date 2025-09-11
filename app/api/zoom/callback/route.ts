@@ -2,11 +2,12 @@
 
 import { adminDb } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import {auth} from '@/lib/firebase'
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
+  
+  const user = auth.currentUser
+  if (!user?.uid) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
 
   await adminDb
     .collection("users")
-    .doc(userId)
+    .doc(user?.uid)
     .set(
       {
         zoomAccessToken: tokenData.access_token,
