@@ -2,8 +2,8 @@
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
-import Timeline from './TimeLine'
-import Logo from './Logo'
+import Timeline from './Timeline'
+
 import { motion, useScroll, useTransform } from 'framer-motion'
 
 function Hero() {
@@ -26,9 +26,7 @@ function Hero() {
             {/* Navigation */}
             <nav className='fixed top-0 w-full z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm'>
                 <div className='flex justify-between items-center p-4 max-w-6xl mx-auto'>
-                    <Link href='/'>
-                        <Logo size={32} />
-                    </Link>
+                  
                     <Link href={user ? '/dashboard' : '/sign-in'} 
                           className='text-gray-900 dark:text-white hover:text-indigo-600'>
                         {user ? "Dashboard" : "Login"}

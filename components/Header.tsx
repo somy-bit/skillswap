@@ -3,13 +3,13 @@
 import { BellIcon, Calendar1Icon, HomeIcon, ListCheckIcon, LogInIcon, MenuIcon, UserIcon } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import React, { useState } from 'react'
-import ToggleDarkMode from './ToggleDarkMode';
-import LogoutBtn from './LogoutBtn'
-import UserAvatar from './UserAvatar'
-import Logo from './Logo'
+import ToggleDarkMode from './ToggleDarkMode'
+import LogoutBtn from './LogoutBtn';
+import UserAvatar from './UserAvatar';
+
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext';
-import MenuButton from './MenuButton';
+import MenuButton from './MenuButton'
 
 function Header({ notif }: { notif?: string[] }) {
 
@@ -24,9 +24,7 @@ function Header({ notif }: { notif?: string[] }) {
                
                     {!pathname.startsWith('/dashboard') && (
                          <div className='flex items-center'>
-                        <Link href="/">
-                            <Logo size={28} />
-                        </Link>
+                      
                          </div>
                     )}
                
