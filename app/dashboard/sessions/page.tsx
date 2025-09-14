@@ -14,7 +14,7 @@ import {
 import { BookedSessionsTab } from '@/components/sessions/BookedSessionsTab';
 import { MyRequestsTab } from '@/components/sessions/MyRequestsTab';
 import { SwapSessionsTab } from '@/components/sessions/SwapSessionsTab';
-import { ReceivedRequestsTab } from '@/components/sessions/ReceivedRequestsTab';
+import { ArchiveTab } from '@/components/sessions/ArchiveTab';
 
 type SwapRequest = {
   id: string;
@@ -40,16 +40,31 @@ export default function SessionsPage() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [swapMessage, setSwapMessage] = useState('');
   const [swapSessions,setSwapSessions] = useState<Session[]>([])
-  const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
+  const [archivedSessions, setArchivedSessions] = useState<Session[]>([])
 
-  const handleCancelSession = (sessionId: string) => {
-    setShowCancelConfirm(sessionId);
-  };
+  const handleCancelSession = async (sessionId: string) => {
+    if (!user) return;
+    
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/sessions', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ sessionId })
+      });
 
-  const confirmCancelSession = async () => {
-    if (!showCancelConfirm) return;
-    await handleSessionAction(showCancelConfirm, 'cancel');
-    setShowCancelConfirm(null);
+      if (response.ok) {
+        setAsMenteeSessions(prev => prev.filter(session => session.id !== sessionId));
+        toast.success('Session cancelled successfully!');
+      } else {
+        toast.error('Failed to cancel session');
+      }
+    } catch (error) {
+      toast.error('Failed to cancel session');
+    }
   };
 
   const fetchData = async () => {
@@ -67,10 +82,11 @@ export default function SessionsPage() {
         const data = await swapResponse.json();
         console.log("data",data)
         
-        setAsMenteeSessions(data.asMentee || []);
-        setAsMentorSessions(data.asMentor || []);
-        setSwapRequests(data.requests || []);
-       setSwapSessions(data.swapSessions || []);
+        setAsMenteeSessions(data.asMentee.filter((session:Session)=>session.status==="pending") || []);
+        setAsMentorSessions(data.asMentor.filter((session:Session)=>session.status==='pending') || []);
+       
+        setSwapSessions(data.swapSessions || []);
+        setArchivedSessions(data.archivedSessions || []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -85,7 +101,7 @@ export default function SessionsPage() {
     }
   }, [user]);
 
-  const handleSessionAction = async (sessionId: string, action: 'accept' | 'reject' | 'cancel' | 'delete') => {
+  const handleSessionAction = async (sessionId: string, action: 'accept' | 'reject' | 'cancel' | 'delete' | 'archive') => {
     await sessionActionUtil(
       sessionId,
       action,
@@ -94,6 +110,15 @@ export default function SessionsPage() {
         if (action === 'delete') {
           setAsMentorSessions(prev => prev.filter(session => session.id !== sessionId));
           setAsMenteeSessions(prev => prev.filter(session => session.id !== sessionId));
+          setArchivedSessions(prev => prev.filter(session => session.id !== sessionId));
+        } else if (action === 'archive') {
+          const sessionToArchive = [...asMentorSessions, ...asMenteeSessions,...swapSessions].find(s => s.id === sessionId);
+          if (sessionToArchive) {
+            setArchivedSessions(prev => [...prev, { ...sessionToArchive, status: 'archived' as any }]);
+            setAsMentorSessions(prev => prev.filter(session => session.id !== sessionId));
+            setAsMenteeSessions(prev => prev.filter(session => session.id !== sessionId));
+            setSwapSessions(prev=>prev.filter(session=>session.id !== sessionId))
+          }
         } else {
           const updateStatus = action === 'accept' ? 'confirmed' : action === 'cancel' ? 'cancelled' : undefined;
           if (updateStatus) {
@@ -107,6 +132,11 @@ export default function SessionsPage() {
                 session.id === sessionId ? { ...session, status: updateStatus as any } : session
               )
             );
+            setSwapSessions(prev=>
+              prev.map(session=>
+                session.id ===sessionId ? {...session,status:updateStatus as any} : session
+              )
+            )
           }
         }
         toast.success(`Session ${action}ed successfully!`);
@@ -137,48 +167,14 @@ export default function SessionsPage() {
     );
   };
 
-  const handleSwapResponse = async (requestId: string, action: 'accept' | 'reject') => {
-    await swapResponseUtil(
-      requestId,
-      action,
-      user,
-      (requestId, action) => {
-        setSwapRequests(prev => 
-          prev.map(req => 
-            req.id === requestId 
-              ? { ...req, status: action === 'accept' ? 'accepted' : 'rejected' }
-              : req
-          )
-        );
-        toast.success(`Swap request ${action}ed successfully!`);
-      },
-      (message) => toast.error(message)
-    );
-  };
+ 
 
-  const handleCancelSwapRequest = async (requestId: string) => {
-    await cancelSwapRequestUtil(
-      requestId,
-      user,
-      (requestId) => {
-        setSwapRequests(prev => prev.filter(req => req.id !== requestId));
-        toast.success('Swap request cancelled successfully!');
-      },
-      (message) => toast.error(message)
-    );
-  };
-
-  const receivedRequests = swapRequests.filter(req => {
-    const allSessions = [...asMentorSessions, ...asMenteeSessions];
-    const targetSession = allSessions.find(s => s.id === req.targetSessionId);
-    return targetSession && (targetSession.mentorId === user?.uid || targetSession.menteeId === user?.uid) && req.requesterId !== user?.uid;
-  });
 
   const tabs = [
     { id: 'booked', label: 'Booked Sessions', icon: Calendar, count: asMentorSessions.length },
     { id: 'requests', label: 'My Requests', icon: Send, count: asMenteeSessions.length },
     { id: 'swaps', label: 'Swap Sessions', icon: ArrowRightLeft, count: swapSessions.length },
-    { id: 'received', label: 'Received Requests', icon: Inbox, count: receivedRequests.length }
+    { id: 'received', label: 'Archive', icon: Inbox, count: archivedSessions.length }
   ];
 
   if (loading) {
@@ -249,7 +245,7 @@ export default function SessionsPage() {
           <BookedSessionsTab
             sessions={asMentorSessions}
             onAction={handleSessionAction}
-            onSwapRequest={handleSwapRequest}
+           
           />
         )}
 
@@ -269,9 +265,9 @@ export default function SessionsPage() {
         )}
 
         {activeTab === 'received' && (
-          <ReceivedRequestsTab
-            requests={receivedRequests}
-            onSwapResponse={handleSwapResponse}
+          <ArchiveTab
+            sessions={archivedSessions}
+            onDelete={(sessionId) => handleSessionAction(sessionId, 'delete')}
           />
         )}
       </div>
@@ -344,41 +340,6 @@ export default function SessionsPage() {
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
               >
                 Send Request
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-     
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl animate-in bounce-in">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <X className="w-5 h-5 text-red-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">Cancel Session</h3>
-              </div>
-            </div>
-            
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to cancel this session? This action cannot be undone and the other participant will be notified.
-            </p>
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowCancelConfirm(null)}
-                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
-              >
-                Keep Session
-              </button>
-              <button
-                onClick={confirmCancelSession}
-                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium"
-              >
-                Cancel Session
               </button>
             </div>
           </div>

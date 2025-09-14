@@ -49,7 +49,7 @@ export type Session = {
   startTime: string,
   endTime: string,
   duration?: number,       // in minutes
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed',
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'|'archived',
   skill: string;
   message: string;
   isSwapSession?: boolean; // indicates if this session was created from a swap

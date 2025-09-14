@@ -7,8 +7,8 @@ interface SessionCardProps {
   session: Session;
   role: 'mentor' | 'mentee';
   index: number;
-  onAction: (sessionId: string, action:  'accept' | 'reject' | 'cancel' | 'delete') => void;
-  onSwapRequest?: (session: Session) => void;
+  onAction: (sessionId: string, action:  'accept' | 'reject' | 'cancel' | 'delete' | 'archive') => void;
+ 
   onCancel?: (sessionId: string) => void;
   children?: React.ReactNode;
 }
@@ -18,7 +18,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   role,
   index,
   onAction,
-  onSwapRequest,
   onCancel,
   children
 }) => {
@@ -47,7 +46,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                 onClick={() => onAction(session.id!, 'accept')}
                 className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
               >
-                Accept
+                Swap
               </button>
               <button
                 onClick={() => onAction(session.id!, 'reject')}
@@ -66,21 +65,33 @@ export const SessionCard: React.FC<SessionCardProps> = ({
               >
                 Cancel
               </button>
-              <button
-                onClick={() => onSwapRequest?.(session)}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Swap
-              </button>
+            
             </>
           )}
           
           {role === 'mentor' && session.status === 'cancelled' && (
+            <>
+              <button
+                onClick={() => onAction(session.id!, 'archive')}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Archive
+              </button>
+              <button
+                onClick={() => onAction(session.id!, 'delete')}
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </>
+          )}
+          
+          {role === 'mentee' && session.status === 'pending' && (
             <button
-              onClick={() => onAction(session.id!, 'delete')}
+              onClick={() => onCancel?.(session.id!)}
               className="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
             >
-              Delete
+              Cancel
             </button>
           )}
           

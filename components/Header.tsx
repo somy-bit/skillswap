@@ -22,11 +22,6 @@ function Header({ notif }: { notif?: string[] }) {
         <>
             <header className={`flex fixed top-0 z-50 w-full h-[60px] mid-lightbg mid-darkbg shadow-sm p-3 items-center justify-between`}>
                
-                    {!pathname.startsWith('/dashboard') && (
-                         <div className='flex items-center'>
-                      
-                         </div>
-                    )}
                
                 <div className='textlight textdark'>
                     {user ? (

@@ -1,5 +1,6 @@
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 import { Session } from '@/types/type';
+
 import { NextRequest, NextResponse } from 'next/server';
 
 async function verifyToken(request: NextRequest) {
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         ...data,
       };
-    });
+    }) as Session[]
 
     // Map mentee sessions
     const asMentee = asMenteeSnap.docs.map((doc) => {
@@ -63,26 +64,23 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         ...data,
       };
-    });
+    }) as Session[]
 
 
-    const swapRequestsSnap = await adminDb.collection('swapRequests').get();
-    const requests = swapRequestsSnap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as SwapReq[];
+   
 
-    const acceptedSwaps = requests.filter(swap => swap.status === 'accepted')
-    const acceptedSessionIds = acceptedSwaps.map(swap => swap.sessionId);
     const swapSessions = [...asMentor, ...asMentee].filter(session =>
-      acceptedSessionIds.includes(session.id)
+      session.status === 'confirmed'
     );
+
+    // Get archived sessions (cancelled sessions)
+ const archivedSessions = [...asMentee,...asMentor].filter(session=>session.status === 'archived')
 
     return NextResponse.json({
       asMentor,
       asMentee,
-      requests,
-      swapSessions
+      swapSessions,
+      archivedSessions
     }, { status: 200 });
 
   } catch (error) {
@@ -156,20 +154,14 @@ export async function PATCH(request: NextRequest) {
     });
 
     if (action === 'accept' && swapRequestData) {
-      // Create new swap session
+      // Update the original session status to accepted
       const sessionRef = adminDb.collection('sessions').doc(swapRequestData.sessionId);
-      const sessionDoc = await sessionRef.get();
-
-      if (sessionDoc.exists) {
-        const sessionData = sessionDoc.data();
-        await adminDb.collection('sessions').add({
-          ...sessionData,
-          isSwapSession: true,
-          originalSessionId: swapRequestData.sessionId,
-          swapRequestId: requestId,
-          status: 'confirmed'
-        });
-      }
+      await sessionRef.update({
+        status: 'confirmed',
+        isSwapSession: true,
+        swapRequestId: requestId,
+        updatedAt: new Date()
+      });
     }
 
     {

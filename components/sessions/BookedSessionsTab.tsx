@@ -6,14 +6,14 @@ import { SessionCard } from './SessionCard';
 
 interface BookedSessionsTabProps {
   sessions: Session[];
-  onAction: (sessionId: string, action: 'accept' | 'reject' | 'cancel' | 'delete') => void;
-  onSwapRequest: (session: Session) => void;
+  onAction: (sessionId: string, action: 'accept' | 'reject' | 'cancel' | 'delete' | 'archive') => void;
+
 }
 
 export const BookedSessionsTab: React.FC<BookedSessionsTabProps> = ({
   sessions,
   onAction,
-  onSwapRequest
+ 
 }) => {
   if (sessions.length === 0) {
     return (
@@ -39,7 +39,7 @@ export const BookedSessionsTab: React.FC<BookedSessionsTabProps> = ({
           role="mentor"
           index={index}
           onAction={onAction}
-          onSwapRequest={onSwapRequest}
+          
         />
       ))}
     </div>

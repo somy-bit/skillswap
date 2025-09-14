@@ -19,7 +19,7 @@ export const getTimeUntilSession = (date: string, startTime: string) => {
 
 export const handleSessionAction = async (
   sessionId: string, 
-  action: 'accept' | 'reject' | 'cancel' | 'delete',
+  action: 'accept' | 'reject' | 'cancel' | 'delete' | 'archive',
   user: any,
   onSuccess: (sessionId: string, action: string) => void,
   onError: (message: string) => void

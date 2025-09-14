@@ -222,11 +222,32 @@ export async function PATCH(request: NextRequest) {
         });
         break;
 
-      case 'delete':
+      case 'archive':
         if (session.mentorId !== uid) {
-          return NextResponse.json({ error: 'Only mentor can delete' }, { status: 403 });
+          return NextResponse.json({ error: 'Only mentor can archive' }, { status: 403 });
         }
-        await adminDb.collection('sessions').doc(sessionDoc.id).delete();
+        
+       
+         // Allow both mentor and mentee to cancel
+        await adminDb.collection('sessions').doc(sessionDoc.id).update({
+          status: 'archived',
+          updatedAt: new Date()
+        });
+        // Delete from sessions collection
+       
+        break;
+
+      case 'delete':
+        // Allow deletion from archived sessions or regular sessions
+        if (session.mentorId !== uid && session.menteeId !== uid) {
+          return NextResponse.json({ error: 'Unauthorized to delete' }, { status: 403 });
+        }
+        
+        // Check if it's an archived session first
+       await adminDb.collection('sessions').doc(sessionDoc.id).delete();
+        
+       
+      
         break;
 
       default:
@@ -262,6 +283,48 @@ async function sendNotification(userId: string, notification: any) {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const decodedToken = await verifyToken(request);
+    const uid = decodedToken.uid;
+
+    const { sessionId } = await request.json();
+
+    // Find the session document
+    const sessionDoc = await adminDb.collection('sessions').doc(sessionId).get();
+
+    if (!sessionDoc.exists) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    const sessionData = sessionDoc.data();
+
+    // Check if user is the mentee (only mentees can delete their requests)
+    if (sessionData?.menteeId !== uid) {
+      return NextResponse.json({ error: 'Only mentee can delete session request' }, { status: 403 });
+    }
+
+    // Delete the session
+    await adminDb.collection('sessions').doc(sessionId).delete();
+
+    // Free up the slot
+    await freeSlot(sessionData.mentorId, sessionData.date, sessionData.startTime, sessionData.endTime);
+
+    // Send notification to mentor
+    await sendNotification(sessionData.mentorId, {
+      type: 'session_cancelled',
+      senderId: uid,
+      message: `Session request for ${sessionData.skill} has been cancelled by the mentee`,
+      sessionId: sessionId
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting session:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

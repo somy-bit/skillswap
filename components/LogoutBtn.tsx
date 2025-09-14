@@ -3,15 +3,19 @@
 import React, { useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { handleSignout } from '@/lib/signOut'
+import { useRouter } from 'next/navigation'
+
 
 
 const LogoutBtn: React.FC = () => {
 
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   const handleLogout = async () => {
     try {
       await handleSignout()
+      router.replace('/sign-in')
     } catch (error) {
       console.error('Error logging out:', error)
     }

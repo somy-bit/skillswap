@@ -61,8 +61,8 @@ function Hero() {
                     </div>
 
                     {/* SVG Illustration */}
-                    <div className='flex justify-center'>
-                        <svg width="400" height="300" viewBox="0 0 400 300" className="w-full max-w-md">
+                    <div className='flex flex-1 justify-center'>
+                        <svg width="400" height="300" viewBox="0 0 400 300" className="w-full">
                             {/* Background circles */}
                             <circle cx="200" cy="150" r="120" fill="#e0e7ff" opacity="0.3"/>
                             <circle cx="200" cy="150" r="80" fill="#c7d2fe" opacity="0.5"/>
