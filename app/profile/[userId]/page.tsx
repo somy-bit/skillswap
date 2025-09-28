@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { Profile, Slot } from '@/types/type'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Calendar } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle } from 'lucide-react'
 import Header from '@/components/Header'
 import { useAuth } from '@/contexts/AuthContext'
 import BookingCard from '@/components/BookingCard'
@@ -124,12 +124,22 @@ function ViewProfilePage() {
                                 <p className='text-blue-100 text-lg'>{profile.occupation}</p>
                                 <p className='text-blue-200'>{profile.experience} years experience • {profile.location}</p>
                                 
-                                {/* Book Session Button */}
-                                <div className='mt-4'>
+                                {/* Action Buttons */}
+                                <div className='mt-4 flex flex-col sm:flex-row gap-3 items-center justify-center'>
+                                    {/* Chat Button */}
+                                    <button
+                                        onClick={() => router.push(`/dashboard/messages/${userId}`)}
+                                        className='flex items-center space-x-2 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium'
+                                    >
+                                        <MessageCircle className='w-5 h-5' />
+                                        <span>Chat</span>
+                                    </button>
+                                    
+                                    {/* Book Session Button */}
                                     {availableSlots.length > 0 ? (
                                         <button
                                             onClick={() => setShowBooking(true)}
-                                            className='flex items-center space-x-2 px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-medium mx-auto'
+                                            className='flex items-center space-x-2 px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-medium'
                                         >
                                             <Calendar className='w-5 h-5' />
                                             <span>Book Session</span>

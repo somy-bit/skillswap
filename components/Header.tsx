@@ -1,6 +1,6 @@
 'use client'
 
-import { BellIcon, Calendar1Icon, HomeIcon, ListCheckIcon, LogInIcon, MenuIcon, UserIcon } from 'lucide-react'
+import { BellIcon, Calendar1Icon, HomeIcon, ListCheckIcon, LogInIcon, MenuIcon, UserIcon, MessageCircle } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import React, { useState } from 'react'
 import ToggleDarkMode from './ToggleDarkMode'
@@ -65,6 +65,7 @@ function Header({ notif }: { notif?: string[] }) {
                         <ToggleDarkMode />
                         <LogoutBtn />
                         <button onClick={() => { router.replace('/dashboard'); setOpenMenu(false); }} className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><HomeIcon /><span>Home</span></button>
+                        <button onClick={() => { router.replace('/dashboard/messages'); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center justify-center  space-x-3 cursor-pointer text-xl font-semibold transition ease-out"><MessageCircle /><span>Messages</span></button>
                         <button onClick={() => { router.replace('/dashboard/sessions'); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center justify-center  space-x-3 cursor-pointer text-xl font-semibold transition ease-out"><ListCheckIcon /><span>Sessions</span></button>
                         <button onClick={() => { router.replace(`/dashboard/profile`); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center space-x-3 justify-center  cursor-pointer text-xl font-semibold transition ease-out"><UserIcon /><span>Profile</span></button>
                         <button onClick={() => { router.replace('/dashboard/notifications'); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center space-x-3 cursor-pointer justify-center  text-xl font-semibold transition ease-out"><BellIcon /><span>Notifications {notif?.length}</span></button>
