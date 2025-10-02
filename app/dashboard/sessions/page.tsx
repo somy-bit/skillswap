@@ -32,7 +32,6 @@ export default function SessionsPage() {
   const { user } = useAuth();
   const [asMenteeSessions, setAsMenteeSessions] = useState<Session[]>([]);
   const [asMentorSessions, setAsMentorSessions] = useState<Session[]>([]);
-  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
   const [activeTab, setActiveTab] = useState<'booked' | 'requests' | 'received' | 'swaps'>('booked');
   const [loading, setLoading] = useState(true);
   const [showSwapModal, setShowSwapModal] = useState(false);
@@ -144,10 +143,7 @@ export default function SessionsPage() {
     );
   };
 
-  const handleSwapRequest = (session: Session) => {
-    setSelectedSession(session);
-    setShowSwapModal(true);
-  };
+  
 
   const submitSwapRequest = async () => {
     await swapRequestUtil(

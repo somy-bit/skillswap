@@ -9,7 +9,7 @@ import { getTimeUntilSession } from '@/lib/sessionUtils';
 interface SwapSessionsTabProps {
   sessions: Session[];
   userId: string;
-  onAction: (sessionId: string, action:  'accept' | 'reject' | 'cancel' | 'delete') => void;
+  onAction: (sessionId: string, action:  'accept' | 'reject' | 'cancel' | 'delete'|'archive') => void;
 }
 
 export const SwapSessionsTab: React.FC<SwapSessionsTabProps> = ({
