@@ -23,7 +23,7 @@ function ChatPage() {
   const params = useParams()
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const userId = params.userId as string
+  const userId = params?.userId as string
   
   const [messages, setMessages] = useState<Message[]>([])
   const [otherUser, setOtherUser] = useState<ChatUser | null>(null)
@@ -32,6 +32,7 @@ function ChatPage() {
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
+    if(!userId) return
     const fetchChatData = async () => {
       if (!user) return
       
@@ -79,7 +80,7 @@ function ChatPage() {
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !user || sending) return
+    if (!newMessage.trim() || !user || sending || !userId) return
     
     setSending(true)
     try {

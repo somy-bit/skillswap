@@ -22,33 +22,60 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   onCancel,
   children
 }) => {
+ 
   const [timeStatus, setTimeStatus] = useState<'upcoming' | 'active' | 'ended'>('upcoming');
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
-    const checkTime = () => {
-      const now = new Date();
-      const sessionDate = new Date(session.date);
-      const [startHour, startMin] = session.startTime.split(':').map(Number);
-      const [endHour, endMin] = session.endTime.split(':').map(Number);
+    // const checkTime = () => {
+    //   const now = new Date();
+    //   console.log("date of session", session.date);
+    //   const sessionDate = new Date(session.date);
+    //   const [startHour, startMin] = session.startTime.split(':').map(Number);
+    //   const [endHour, endMin] = session.endTime.split(':').map(Number);
       
-      const startTime = new Date(sessionDate);
-      startTime.setHours(startHour, startMin, 0, 0);
+    //   const startTime = new Date(sessionDate);
+    //   startTime.setHours(startHour, startMin, 0, 0);
       
-      const endTime = new Date(sessionDate);
-      endTime.setHours(endHour, endMin, 0, 0);
+    //   const endTime = new Date(sessionDate);
+    //   endTime.setHours(endHour, endMin, 0, 0);
+     
+    //   if (now >= startTime && now <= endTime) {
+    //     setTimeStatus('active');
+    //   } else if (now > endTime) {
+    //     setTimeStatus('ended');
+    //     if (session.status !== 'archived') {
+    //       onAction(session.id!, 'archive');
+    //     }
+    //   } else {
+    //     setTimeStatus('upcoming');
+    //   }
+    // };
 
-      if (now >= startTime && now <= endTime) {
-        setTimeStatus('active');
-      } else if (now > endTime) {
-        setTimeStatus('ended');
-        if (session.status !== 'archived') {
-          onAction(session.id!, 'archive');
-        }
-      } else {
-        setTimeStatus('upcoming');
-      }
-    };
+    const checkTime = () => {
+  const now = new Date();
+
+  // Parse date part safely
+  const [year, month, day] = session.date.split("-").map(Number);
+
+  const [startHour, startMin] = session.startTime.split(":").map(Number);
+  const [endHour, endMin] = session.endTime.split(":").map(Number);
+
+  // Build UTC timestamps
+  const startTime = new Date(Date.UTC(year, month - 1, day, startHour, startMin));
+  const endTime   = new Date(Date.UTC(year, month - 1, day, endHour, endMin));
+
+  if (now >= startTime && now <= endTime) {
+    setTimeStatus("active");
+  } else if (now > endTime) {
+    setTimeStatus("ended");
+    if (session.status !== "archived") {
+      onAction(session.id!, "archive");
+    }
+  } else {
+    setTimeStatus("upcoming");
+  }
+};
 
     checkTime();
     const interval = setInterval(checkTime, 60000); // Check every minute
@@ -169,7 +196,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
       <div className="space-y-2 text-sm text-gray-600 mb-4">
         <div className="flex items-center space-x-2">
           <Calendar className="w-4 h-4" />
-          <span>{new Date(session.date).toLocaleDateString()}</span>
+          <span>{new Date(session.date).toLocaleDateString("en-CA", { timeZone: "UTC" })}</span>
         </div>
         <div className="flex items-center space-x-2">
           <Clock className="w-4 h-4" />

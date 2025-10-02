@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Slot, Session } from '@/types/type';
 import { Plus, Trash2, Calendar, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { getVancouverDate, getVancouverDateString, isPastDate, isToday } from '@/lib/timezone';
+import { getVancouverDate, isPastDate, isToday } from '@/lib/timezone';
 
 function TimetablePage() {
   const { user } = useAuth();
@@ -59,7 +59,7 @@ function TimetablePage() {
         });
         if (sessionsResponse.ok && sessionsResponse.status===200) {
           const sessionsData = await sessionsResponse.json();
-          console.log('sessions',sessionsData)
+         
           setBookedSessions([...sessionsData.asMentor, ...sessionsData.asMentee]);
         }
       } catch (error) {
@@ -85,10 +85,10 @@ function TimetablePage() {
   const updateSlot = (index: number, field: keyof Slot, value: string | boolean) => {
     const updatedSlots = [...slots];
     updatedSlots[index] = { ...updatedSlots[index], [field]: value };
-    
+   
     if (field === 'date') {
       const selectedDateStr = value as string;
-      
+     
       if (isPastDate(selectedDateStr)) {
         toast.error('Date cannot be in the past');
         return;
@@ -121,6 +121,7 @@ function TimetablePage() {
     }
     
     setSlots(updatedSlots);
+    
   };
 
   const removeSlot = (index: number) => {

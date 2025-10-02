@@ -8,8 +8,7 @@ import { toast } from 'react-toastify';
 import { 
   handleSessionAction as sessionActionUtil,
   handleSwapRequest as swapRequestUtil,
-  handleSwapResponse as swapResponseUtil,
-  handleCancelSwapRequest as cancelSwapRequestUtil
+
 } from '@/lib/sessionUtils';
 import { BookedSessionsTab } from '@/components/sessions/BookedSessionsTab';
 import { MyRequestsTab } from '@/components/sessions/MyRequestsTab';
