@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin'
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
+  request: NextRequest
 ) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -14,10 +13,15 @@ export async function GET(
     const token = authHeader.split('Bearer ')[1]
     const decodedToken = await adminAuth.verifyIdToken(token)
     const currentUserId = decodedToken.uid
-    const otherUserId = params.userId
+   
 
+     const url = new URL(request.url);                // safe in all runtimes
+     const segments = url.pathname.split("/").filter(Boolean);
+     const id = segments[segments.length - 1]; // get the last segment
+     console.log("otherUserId", id);
+     console.log("id", id);
     // Find or create conversation
-    const conversationId = [currentUserId, otherUserId].sort().join('_')
+    const conversationId = [currentUserId, id].sort().join('_')
     
     // Get messages for this conversation
     const messagesSnapshot = await adminDb.collection('messages')

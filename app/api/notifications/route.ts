@@ -23,13 +23,13 @@ export async function GET(request: NextRequest) {
     if (!doc.exists) {
       return NextResponse.json([]);
     }
-    
+    console.log("Notification doc:",  doc.data());
     const data = doc.data();
     const notifications = data?.notifications || [];
     
     // Only return unseen notifications
     const unseenNotifications = notifications.filter((notif: any) => !notif.seen);
-    
+    console.log("Unseen notifications:", unseenNotifications);
     // Sort by timestamp (newest first)
     unseenNotifications.sort((a: any, b: any) => b.timestamp.toDate() - a.timestamp.toDate());
     

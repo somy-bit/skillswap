@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Slot, Session } from '@/types/type';
 import { Plus, Trash2, Calendar, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { getVancouverDate, getVancouverDateString, isPastDate, isToday } from '@/lib/timezone';
 
 function TimetablePage() {
   const { user } = useAuth();
@@ -26,14 +27,21 @@ function TimetablePage() {
         });
         if (slotsResponse.ok) {
           const slotsData = await slotsResponse.json();
-          const today = new Date();
+          const today = getVancouverDate();
           today.setHours(0, 0, 0, 0);
+          
+          // Keep slots for one day after they expire
+          const oneDayAgo = new Date(today);
+          oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+          
           const currentSlots = slotsData.filter((slot: Slot) => {
-            const slotDate = new Date(slot.date);
-            return slotDate >= today;
+            const slotDate = new Date(slot.date + 'T00:00:00');
+            return slotDate >= oneDayAgo;
           });
+          
           setSlots(currentSlots);
           
+          // Only update database if we actually removed expired slots
           if (currentSlots.length !== slotsData.length) {
             await fetch('/api/timetable', {
               method: 'POST',
@@ -79,11 +87,9 @@ function TimetablePage() {
     updatedSlots[index] = { ...updatedSlots[index], [field]: value };
     
     if (field === 'date') {
-      const selectedDate = new Date(value as string);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const selectedDateStr = value as string;
       
-      if (selectedDate < today) {
+      if (isPastDate(selectedDateStr)) {
         toast.error('Date cannot be in the past');
         return;
       }
@@ -98,17 +104,15 @@ function TimetablePage() {
         }
         
         if (slot.date) {
-          const slotDate = new Date(slot.date);
-          const today = new Date();
-          
-          if (slotDate.toDateString() === today.toDateString()) {
-            const now = new Date();
+          // Only check time if it's today in Vancouver timezone
+          if (isToday(slot.date)) {
+            const now = getVancouverDate();
             const [startHour, startMin] = slot.startTime.split(':').map(Number);
-            const slotStart = new Date();
+            const slotStart = getVancouverDate();
             slotStart.setHours(startHour, startMin, 0, 0);
             
             if (slotStart <= now) {
-              toast.error('Start time cannot be in the past');
+              toast.error('Start time cannot be in the past for today');
               return;
             }
           }
@@ -184,7 +188,7 @@ function TimetablePage() {
   };
 
   const renderCalendarView = () => {
-    const today = new Date();
+    const today = getVancouverDate();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
@@ -217,7 +221,11 @@ function TimetablePage() {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          {new Date(currentYear, currentMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          {new Date(currentYear, currentMonth).toLocaleDateString('en-US', { 
+            month: 'long', 
+            year: 'numeric',
+            timeZone: 'America/Vancouver'
+          })}
         </h2>
         <div className="grid grid-cols-7 gap-1">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
@@ -300,7 +308,7 @@ function TimetablePage() {
                             <div className='w-3 h-3 bg-green-500 rounded-full'></div>
                             <div>
                               <div className='font-medium text-gray-900 dark:text-white'>
-                                {new Date(slot.date).toLocaleDateString()}
+                                {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-US', {timeZone: 'America/Vancouver'})}
                               </div>
                               <div className='text-sm text-gray-600 dark:text-gray-300'>
                                 {slot.startTime} - {slot.endTime}

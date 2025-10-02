@@ -46,7 +46,7 @@ export async function GET(
       return slotDate >= today;
     });
     console.log(currentSlots)
-    return NextResponse.json(currentSlots);
+    return NextResponse.json(slots);
   } catch (error) {
     console.error('Error fetching slots:', error);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

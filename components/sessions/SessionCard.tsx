@@ -1,14 +1,15 @@
 'use client';
 
 import { Session } from '@/types/type';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, Clock, User, Video } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import VideoCall from '../VideoCall';
 
 interface SessionCardProps {
   session: Session;
   role: 'mentor' | 'mentee';
   index: number;
   onAction: (sessionId: string, action:  'accept' | 'reject' | 'cancel' | 'delete' | 'archive') => void;
- 
   onCancel?: (sessionId: string) => void;
   children?: React.ReactNode;
 }
@@ -21,9 +22,46 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   onCancel,
   children
 }) => {
+  const [timeStatus, setTimeStatus] = useState<'upcoming' | 'active' | 'ended'>('upcoming');
+  const [showVideo, setShowVideo] = useState(false);
+
+  useEffect(() => {
+    const checkTime = () => {
+      const now = new Date();
+      const sessionDate = new Date(session.date);
+      const [startHour, startMin] = session.startTime.split(':').map(Number);
+      const [endHour, endMin] = session.endTime.split(':').map(Number);
+      
+      const startTime = new Date(sessionDate);
+      startTime.setHours(startHour, startMin, 0, 0);
+      
+      const endTime = new Date(sessionDate);
+      endTime.setHours(endHour, endMin, 0, 0);
+
+      if (now >= startTime && now <= endTime) {
+        setTimeStatus('active');
+      } else if (now > endTime) {
+        setTimeStatus('ended');
+        if (session.status !== 'archived') {
+          onAction(session.id!, 'archive');
+        }
+      } else {
+        setTimeStatus('upcoming');
+      }
+    };
+
+    checkTime();
+    const interval = setInterval(checkTime, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [session, onAction]);
+
+  const joinCall = () => setShowVideo(true);
+
   return (
     <div 
-      className="animate-in fade-in-50 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className={`animate-in fade-in-50 bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${
+        timeStatus === 'ended' ? 'opacity-60' : ''
+      }`}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="flex items-center justify-between mb-4">
@@ -32,14 +70,31 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             session.status === 'confirmed' ? 'bg-green-500' :
             session.status === 'pending' ? 'bg-yellow-500' :
             session.status === 'cancelled' ? 'bg-red-500' :
+            session.status === 'archived' ? 'bg-gray-500' :
             'bg-blue-500'
           }`}></div>
           <span className="text-sm font-medium capitalize text-gray-700">
             {session.status === 'confirmed' && role === 'mentee' ? 'Confirmed - Swap Pending' : session.status}
           </span>
+          {timeStatus === 'active' && (
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+              Live Now
+            </span>
+          )}
         </div>
         
         <div className="flex space-x-2">
+          {/* Video Call Button - Only show when session is active and confirmed */}
+          {timeStatus === 'active' && session.status === 'confirmed' && (
+            <button
+              onClick={joinCall}
+              className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Video className="w-4 h-4" />
+              <span>Join Call</span>
+            </button>
+          )}
+
           {role === 'mentor' && session.status === 'pending' && (
             <>
               <button
@@ -57,16 +112,13 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             </>
           )}
           
-          {role === 'mentor' && session.status === 'confirmed' && (
-            <>
-              <button
-                onClick={() => onAction(session.id!, 'cancel')}
-                className="px-3 py-1 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
-              >
-                Cancel
-              </button>
-            
-            </>
+          {role === 'mentor' && session.status === 'confirmed' && timeStatus !== 'ended' && (
+            <button
+              onClick={() => onAction(session.id!, 'cancel')}
+              className="px-3 py-1 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              Cancel
+            </button>
           )}
           
           {role === 'mentor' && session.status === 'cancelled' && (
@@ -95,13 +147,19 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             </button>
           )}
           
-          {role === 'mentee' && session.status === 'confirmed' && (
+          {role === 'mentee' && session.status === 'confirmed' && timeStatus !== 'ended' && (
             <button
               onClick={() => onCancel?.(session.id!)}
               className="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
             >
               Cancel
             </button>
+          )}
+
+          {timeStatus === 'ended' && (
+            <span className="text-xs text-gray-500 px-2 py-1">
+              Session Ended
+            </span>
           )}
         </div>
       </div>
@@ -129,6 +187,13 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
           {session.message}
         </p>
+      )}
+
+      {showVideo && (
+        <VideoCall 
+          roomName={`skill-swap-${session.id}`} 
+          onClose={() => setShowVideo(false)} 
+        />
       )}
     </div>
   );

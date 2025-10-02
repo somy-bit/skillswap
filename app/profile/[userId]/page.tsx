@@ -23,7 +23,7 @@ function ViewProfilePage() {
     const params = useParams()
     const router = useRouter()
     const { user } = useAuth()
-    const userId = params.userId as string
+    const userId = params?.userId as string
     const [profile, setProfile] = useState<Profile | null>(null)
     const [availableSlots, setAvailableSlots] = useState<Slot[]>([])
     const [loading, setLoading] = useState(true)
