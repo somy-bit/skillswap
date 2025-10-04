@@ -1,16 +1,15 @@
 'use client'
 
-import { BellIcon, Calendar1Icon, HomeIcon, ListCheckIcon, LogInIcon,  UserIcon, MessageCircle } from 'lucide-react'
-import { useRouter, usePathname } from 'next/navigation'
+import {  Calendar1Icon, HomeIcon, ListCheckIcon, LogInIcon,  UserIcon, MessageCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import ToggleDarkMode from './ToggleDarkMode'
 import LogoutBtn from './LogoutBtn';
 import UserAvatar from './UserAvatar';
-
-import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext';
 import MenuButton from './MenuButton'
 import BellNotif from './BellNotif'
+import Link from 'next/link'
 
 function Header() {
 
@@ -59,12 +58,14 @@ function Header() {
 
                         <ToggleDarkMode />
                         <LogoutBtn />
-                        <button onClick={() => { router.replace('/dashboard'); setOpenMenu(false); }} className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><HomeIcon /><span>Home</span></button>
-                        <button onClick={() => { router.replace('/dashboard/messages'); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center justify-center  space-x-3 cursor-pointer text-xl font-semibold transition ease-out"><MessageCircle /><span>Messages</span></button>
-                        <button onClick={() => { router.replace('/dashboard/sessions'); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center justify-center  space-x-3 cursor-pointer text-xl font-semibold transition ease-out"><ListCheckIcon /><span>Sessions</span></button>
-                        <button onClick={() => { router.replace(`/dashboard/profile`); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center space-x-3 justify-center  cursor-pointer text-xl font-semibold transition ease-out"><UserIcon /><span>Profile</span></button>
-                        <button onClick={() => { router.replace('/dashboard/notifications'); setOpenMenu(false) }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center space-x-3 cursor-pointer justify-center  text-xl font-semibold transition ease-out"><BellNotif /><span>Notifications </span></button>
-                        <button onClick={() => { router.replace('/dashboard/timetable'); setOpenMenu(false); }} className="dark:text-white text-gray-800 hover:text-maroon-300 flex flex-row items-center space-x-3 cursor-pointer text-xl font-semibold justify-center  transition ease-out"><Calendar1Icon /><span>Schedule</span></button>
+                       
+                        
+                        <Link href="/dashboard" onClick={() => setOpenMenu(false)} className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><HomeIcon /><span>Home</span></Link>
+                        <Link href="/dashboard/messages" onClick={() => setOpenMenu(false)} className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><MessageCircle /><span>Messages</span></Link>
+                        <Link href="/dashboard/sessions" onClick={() => setOpenMenu(false)} className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><ListCheckIcon /><span>Sessions</span></Link>
+                        <Link href="/dashboard/profile" onClick={() => setOpenMenu(false)} className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><UserIcon /><span>Profile</span></Link>
+                        <span className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><BellNotif /> <Link href="/dashboard/notifications" onClick={() => setOpenMenu(false)} >Notifications </Link></span>
+                        <Link href="/dashboard/timetable" onClick={() => setOpenMenu(false)} className="dark:text-white text-gray-800 hover:text-maroon-300 cursor-pointer flex flex-row justify-center items-center space-x-3 text-xl font-semibold transition ease-out"><Calendar1Icon /><span>Schedule</span></Link>
                     </nav>
                 </div>
             </div>

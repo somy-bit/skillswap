@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Slot, Session } from '@/types/type';
 import { Plus, Trash2, Calendar, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { getVancouverDate, isPastDate, isToday } from '@/lib/timezone';
+import { isPastDate, isToday } from '@/lib/timezone';
 
 function TimetablePage() {
   const { user } = useAuth();
@@ -27,7 +27,7 @@ function TimetablePage() {
         });
         if (slotsResponse.ok) {
           const slotsData = await slotsResponse.json();
-          const today = getVancouverDate();
+          const today = new Date();
           today.setHours(0, 0, 0, 0);
           
           // Keep slots for one day after they expire
@@ -106,9 +106,9 @@ function TimetablePage() {
         if (slot.date) {
           // Only check time if it's today in Vancouver timezone
           if (isToday(slot.date)) {
-            const now = getVancouverDate();
+            const now = new Date();
             const [startHour, startMin] = slot.startTime.split(':').map(Number);
-            const slotStart = getVancouverDate();
+            const slotStart = new Date();
             slotStart.setHours(startHour, startMin, 0, 0);
             
             if (slotStart <= now) {
@@ -189,7 +189,7 @@ function TimetablePage() {
   };
 
   const renderCalendarView = () => {
-    const today = getVancouverDate();
+    const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
@@ -205,7 +205,7 @@ function TimetablePage() {
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dayBookedSessions = bookedSessions.filter(slot => slot.date === dateStr);
-      console.log('slot date',bookedSessions)
+    
       days.push(
         <div key={day} className="p-2 border border-gray-200 dark:border-gray-600 min-h-[80px]">
           <div className="font-medium text-sm text-gray-900 dark:text-white mb-1">{day}</div>

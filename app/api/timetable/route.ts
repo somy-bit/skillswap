@@ -1,8 +1,8 @@
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 import { NextRequest, NextResponse } from 'next/server';
 
-function getVancouverDate(): Date {
-  return new Date(new Date().toLocaleString("en-US", {timeZone: 'America/Vancouver'}));
+function getLocalDate(): Date {
+  return new Date();
 }
 
 async function verifyToken(request: NextRequest) {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const slotsRef = adminDb.collection('slots').doc(uid);
     await slotsRef.set({
       slots,
-      updatedAt: getVancouverDate()
+      updatedAt: getLocalDate()
     });
     
     return NextResponse.json({ success: true });

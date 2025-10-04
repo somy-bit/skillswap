@@ -22,7 +22,7 @@ export default function VideoCall({ roomName, onClose }: VideoCallProps) {
         roomName,
         parentNode: document.querySelector('#jitsi-container'),
         width: '100%',
-        height: 500,
+        height: '100%',
         configOverwrite: {
           startWithAudioMuted: true,
           startWithVideoMuted: false,

@@ -38,15 +38,15 @@ export async function GET(
     const data = doc.data();
     const slots = data?.slots || [];
 
-    // Filter out past slots
+    // Filter out past slots based on local timezone
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const currentSlots = slots.filter((slot: any) => {
-      const slotDate = new Date(slot.date);
+      const slotDate = new Date(slot.date + 'T00:00:00');
       return slotDate >= today;
     });
     console.log(currentSlots)
-    return NextResponse.json(slots);
+    return NextResponse.json(currentSlots);
   } catch (error) {
     console.error('Error fetching slots:', error);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -23,20 +23,16 @@ export async function GET(request: NextRequest) {
 
     sessionsSnapshot.forEach(doc => {
       const data = doc.data();
-      if (data.sessions) {
-        data.sessions.forEach((session: any) => {
-          if (session.mentorId === uid || session.menteeId === uid) {
-            allSessions.push({
-              id: doc.id + '_' + allSessions.length,
-              ...session
-            });
-          }
+      // Check if user is mentor or mentee in this session
+      if (data.mentorId === uid || data.menteeId === uid) {
+        allSessions.push({
+          id: doc.id, // Use the actual document ID
+          ...data
         });
       }
     });
-    console.log("sessions",allSessions)
 
-    return NextResponse.json({ sessions: allSessions },{status:200});
+    return NextResponse.json({ sessions: allSessions }, { status: 200 });
   } catch (error) {
     console.error('Error fetching sessions:', error);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -131,26 +127,14 @@ export async function PATCH(request: NextRequest) {
 
     const { sessionId, action } = await request.json();
 
-    // Find the session document
-    const sessionsSnapshot = await adminDb.collection('sessions').get();
-    let sessionDoc: any = null;
-    let sessionData: any = null;
+    // Get the session document directly
+    const sessionDoc = await adminDb.collection('sessions').doc(sessionId).get();
 
-    for (const doc of sessionsSnapshot.docs) {
-      const data = doc.data();
-      if (doc.id === sessionId || (data.sessions && data.sessions.some((s: any) => s.id === sessionId))) {
-        sessionDoc = doc;
-        sessionData = data;
-        break;
-      }
-    }
-
-    if (!sessionDoc) {
+    if (!sessionDoc.exists) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    const session = sessionDoc.id === sessionId ? sessionData : 
-      sessionData.sessions?.find((s: any) => s.id === sessionId);
+    const session = sessionDoc.data();
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
@@ -166,7 +150,7 @@ export async function PATCH(request: NextRequest) {
         if (session.mentorId !== uid) {
           return NextResponse.json({ error: 'Only mentor can accept' }, { status: 403 });
         }
-        await adminDb.collection('sessions').doc(sessionDoc.id).update({
+        await adminDb.collection('sessions').doc(sessionId).update({
           status: 'confirmed',
           updatedAt: new Date()
         });
@@ -184,7 +168,7 @@ export async function PATCH(request: NextRequest) {
         if (session.mentorId !== uid) {
           return NextResponse.json({ error: 'Only mentor can reject' }, { status: 403 });
         }
-        await adminDb.collection('sessions').doc(sessionDoc.id).update({
+        await adminDb.collection('sessions').doc(sessionId).update({
           status: 'rejected',
           updatedAt: new Date()
         });
@@ -203,7 +187,7 @@ export async function PATCH(request: NextRequest) {
 
       case 'cancel':
         // Allow both mentor and mentee to cancel
-        await adminDb.collection('sessions').doc(sessionDoc.id).update({
+        await adminDb.collection('sessions').doc(sessionId).update({
           status: 'cancelled',
           updatedAt: new Date()
         });
@@ -227,14 +211,10 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: 'Only mentor can archive' }, { status: 403 });
         }
         
-       
-         // Allow both mentor and mentee to cancel
-        await adminDb.collection('sessions').doc(sessionDoc.id).update({
+        await adminDb.collection('sessions').doc(sessionId).update({
           status: 'archived',
           updatedAt: new Date()
         });
-        // Delete from sessions collection
-       
         break;
 
       case 'delete':
@@ -243,11 +223,7 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: 'Unauthorized to delete' }, { status: 403 });
         }
         
-        // Check if it's an archived session first
-       await adminDb.collection('sessions').doc(sessionDoc.id).delete();
-        
-       
-      
+        await adminDb.collection('sessions').doc(sessionId).delete();
         break;
 
       default:

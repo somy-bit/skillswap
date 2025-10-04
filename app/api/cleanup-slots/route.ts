@@ -1,13 +1,13 @@
 import { adminDb } from '@/lib/firebaseAdmin';
 import { NextResponse } from 'next/server';
 
-function getVancouverDate(): Date {
-  return new Date(new Date().toLocaleString("en-US", {timeZone: 'America/Vancouver'}));
+function getLocalDate(): Date {
+  return new Date();
 }
 
 export async function POST() {
   try {
-    const today = getVancouverDate();
+    const today = getLocalDate();
     today.setHours(0, 0, 0, 0);
     
     // Calculate cutoff date (1 day ago)
