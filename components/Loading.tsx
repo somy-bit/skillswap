@@ -1,20 +1,10 @@
-"use client";
-
-import { Loader2 } from "lucide-react"; // optional spinner icon from lucide
-import React from "react";
-
-interface LoadingOverlayProps {
-  show: boolean;
-}
-
-const Loading: React.FC<LoadingOverlayProps> = ({ show }) => {
-  if (!show) return null;
-
+export default function Loading() {
   return (
-    <div className="fixed inset-0 z-50 bg-indigo-600/20 bg-opacity-50 flex items-center justify-center">
-      <Loader2 className="w-12 h-12 text-white animate-spin" />
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="w-12 h-12 border-4 border-dashed border-blue-500 rounded-full animate-spin"></div>
+        <p className="text-gray-600 text-sm">Loading...</p>
+      </div>
     </div>
   );
-};
-
-export default Loading;
+}

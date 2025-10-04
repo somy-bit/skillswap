@@ -5,15 +5,15 @@
 
 @layer components {
   .dark .darkbg {
-    @apply bg-[#1A0000];
+    @apply bg-[#0e0d0d];
   }
   
   .lightbg {
-    @apply bg-[#FBEAEA];
+    @apply bg-[#fff];
   }
   
   .dark .mid-darkbg {
-    @apply bg-[#4A0000];
+    @apply bg-[#160101];
   }
   
   .mid-lightbg {

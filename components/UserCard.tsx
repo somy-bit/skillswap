@@ -29,7 +29,7 @@ export default function UserCard({ profile }: UserCardProps) {
   return (
     <div 
       onClick={handleClick}
-      className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 pt-16 max-w-sm mx-auto cursor-pointer hover:shadow-xl transition-shadow duration-300"
+      className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 pt-16 max-w-sm mx-auto cursor-pointer hover:shadow-xl transition-shadow duration-300"
     >
       {/* Profile Image - Half outside card */}
       <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
