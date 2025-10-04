@@ -24,7 +24,7 @@ export default function RootLayout({
         >
          
           {children}
-           <ToastContainer position="top-right" autoClose={2500} />
+           <ToastContainer position="top-right" autoClose={1000} />
         </body>
       </html>
     </AuthProvider>

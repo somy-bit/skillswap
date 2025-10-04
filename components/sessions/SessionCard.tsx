@@ -5,6 +5,7 @@ import { isSessionActive, hasSessionEnded, formatDateForDisplay } from '@/lib/ti
 import { useState, useEffect } from 'react';
 import VideoCall from '../VideoCall';
 import { Calendar, Clock, User, Video } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SessionCardProps {
   session: Session;
@@ -23,7 +24,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   onCancel,
   children
 }) => {
- 
+  const { user } = useAuth();
   const [timeStatus, setTimeStatus] = useState<'upcoming' | 'active' | 'ended'>('upcoming');
   const [showVideo, setShowVideo] = useState(false);
 
@@ -91,10 +92,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             'bg-blue-500'
           }`}></div>
           <span className="text-sm font-medium capitalize text-gray-700">
-            {session.status === 'confirmed' && role === 'mentee' ? 'Confirmed - Swap Pending' : session.status}
+            {session.status === 'confirmed' && role === 'mentee' ? 'Confirmed ' : session.status}
           </span>
           {timeStatus === 'active' && (
-            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+            <span className="text-xs bg-green-100 text-green-800 px-1 py-1 rounded-full">
               Live Now
             </span>
           )}
@@ -209,7 +210,9 @@ export const SessionCard: React.FC<SessionCardProps> = ({
       {showVideo && (
         <VideoCall 
           roomName={`skill-swap-${session.id}`} 
-          onClose={() => setShowVideo(false)} 
+          onClose={() => setShowVideo(false)}
+          isModerator={role === 'mentor'}
+          userName={user?.displayName || user?.email || 'User'}
         />
       )}
     </div>

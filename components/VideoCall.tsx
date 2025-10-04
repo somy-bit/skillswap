@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface VideoCallProps {
   roomName: string;
   onClose: () => void;
+  isModerator?: boolean;
+  userName?: string;
 }
 
 declare global {
@@ -13,7 +16,14 @@ declare global {
   }
 }
 
-export default function VideoCall({ roomName, onClose }: VideoCallProps) {
+export default function VideoCall({ 
+  roomName, 
+  onClose, 
+  isModerator = false,
+  userName = 'User'
+}: VideoCallProps) {
+  const { user } = useAuth();
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://meet.jit.si/external_api.js';
@@ -22,14 +32,37 @@ export default function VideoCall({ roomName, onClose }: VideoCallProps) {
         roomName,
         parentNode: document.querySelector('#jitsi-container'),
         width: '100%',
-        height: '100%',
-        configOverwrite: {
-          startWithAudioMuted: true,
-          startWithVideoMuted: false,
+        height: '600px',
+        userInfo: {
+          displayName: userName,
+          email: user?.email || ''
         },
+        configOverwrite: {
+          startWithAudioMuted: !isModerator,
+          startWithVideoMuted: false,
+          prejoinPageEnabled: false,
+          enableWelcomePage: false,
+          enableClosePage: false,
+          defaultLanguage: 'en',
+          toolbarButtons: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+            'fodeviceselection', 'hangup', 'profile', 'chat', 'settings',
+            'raisehand', 'videoquality', 'filmstrip', 'tileview'
+          ],
+        },
+        interfaceConfigOverwrite: {
+          DEFAULT_LANGUAGE: 'en',
+          LANG_DETECTION: false,
+          SHOW_JITSI_WATERMARK: false,
+          TOOLBAR_ALWAYS_VISIBLE: true,
+          TOOLBAR_TIMEOUT: 0,
+        }
       });
 
+     
+
       api.addEventListener('videoConferenceLeft', onClose);
+      api.addEventListener('readyToClose', onClose);
     };
     document.head.appendChild(script);
 
@@ -41,7 +74,7 @@ export default function VideoCall({ roomName, onClose }: VideoCallProps) {
         }
       }
     };
-  }, [roomName, onClose]);
+  }, [roomName, onClose, isModerator, userName, user]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col">
@@ -51,7 +84,11 @@ export default function VideoCall({ roomName, onClose }: VideoCallProps) {
       >
         ×
       </button>
-      <div id="jitsi-container" className="flex-1 m-4 mt-16"></div>
+      <div 
+        id="jitsi-container" 
+        className="w-full h-full"
+        style={{ minHeight: '600px' }}
+      ></div>
     </div>
   );
 }
