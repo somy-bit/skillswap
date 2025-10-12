@@ -9,9 +9,11 @@ import RecentActivity from '@/components/dashboard/RecentActivity';
 import SkillsOverview from '@/components/dashboard/SkillsOverview';
 import UpcomingSessions from '@/components/dashboard/UpcomingSessions';
 import { Users, Calendar, MessageSquare, TrendingUp, Filter } from 'lucide-react';
+import { useStats } from '@/lib/hooks/useStats';
 
 function Dashboard() {
     const { user } = useAuth();
+    const { data: stats, loading: statsLoading, error: statsError } = useStats();
     const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [occupationFilter, setOccupationFilter] = useState('');
@@ -106,34 +108,51 @@ function Dashboard() {
 
                 {/* Stats Cards */}
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
-                    <StatsCard
-                        title="Total Connections"
-                        value={allProfiles.length}
-                        icon={Users}
-                        trend="+12% this month"
-                        color="bg-blue-500"
-                    />
-                    <StatsCard
-                        title="Sessions This Week"
-                        value="8"
-                        icon={Calendar}
-                        trend="+3 from last week"
-                        color="bg-green-500"
-                    />
-                    <StatsCard
-                        title="Messages"
-                        value="24"
-                        icon={MessageSquare}
-                        trend="5 unread"
-                        color="bg-purple-500"
-                    />
-                    <StatsCard
-                        title="Skill Level"
-                        value="Advanced"
-                        icon={TrendingUp}
-                        trend="Level up!"
-                        color="bg-orange-500"
-                    />
+                    {statsLoading ? (
+                        // Skeleton loading
+                        [...Array(4)].map((_, i) => (
+                            <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border animate-pulse">
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-3/4"></div>
+                                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/2"></div>
+                                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                            </div>
+                        ))
+                    ) : statsError ? (
+                        <div className="col-span-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-600">Failed to load stats</p>
+                        </div>
+                    ) : stats ? (
+                        <>
+                            <StatsCard
+                                title="Total Connections"
+                                value={stats.totalConnections}
+                                icon={Users}
+                                trend={`${stats.totalConnections} profiles`}
+                                color="bg-blue-500"
+                            />
+                            <StatsCard
+                                title="Sessions This Week"
+                                value={stats.thisWeekSessions}
+                                icon={Calendar}
+                                trend={`${stats.sessionDifference >= 0 ? '+' : ''}${stats.sessionDifference} from last week`}
+                                color="bg-green-500"
+                            />
+                            <StatsCard
+                                title="Messages"
+                                value={stats.unreadMessages}
+                                icon={MessageSquare}
+                                trend={`${stats.unreadMessages} unread`}
+                                color="bg-purple-500"
+                            />
+                            <StatsCard
+                                title="Weekly Growth"
+                                value={stats.sessionDifference >= 0 ? `+${stats.sessionDifference}` : stats.sessionDifference}
+                                icon={TrendingUp}
+                                trend={stats.sessionDifference >= 0 ? "Growing!" : "Keep going!"}
+                                color="bg-orange-500"
+                            />
+                        </>
+                    ) : null}
                 </div>
 
                 {/* Main Content Grid */}

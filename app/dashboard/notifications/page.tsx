@@ -4,65 +4,102 @@ import React, { useEffect, useState } from 'react'
 import { Notification } from '@/types/type'
 import NotifCard from '@/components/NotifCard'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 const NotificationsPage: React.FC = () => {
   const { user } = useAuth()
+  const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [unreadIds, setUnreadIds] = useState<string[]>([])
 
-  // Fetch notifications
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user) return
-      
-      try {
-        const token = await user.getIdToken()
-        const response = await fetch('/api/notifications', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          setNotifications(data)
-        }
-      } catch (error) {
-        console.error('Error fetching notifications:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchNotifications()
   }, [user])
 
-  // Mark as read (when click) - now deletes the notification
-  const handleClick = async (notif: Notification, index: number) => {
+  // Mark notifications as read when leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (unreadIds.length > 0) {
+        markAllAsRead()
+      }
+    }
+
+    const handleRouteChange = () => {
+      if (unreadIds.length > 0) {
+        markAllAsRead()
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    
+    const originalPush = router.push
+    router.push = (...args) => {
+      handleRouteChange()
+      return originalPush.apply(router, args)
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      if (unreadIds.length > 0) {
+        markAllAsRead()
+      }
+    }
+  }, [unreadIds, router])
+
+  const fetchNotifications = async () => {
     if (!user) return
     
     try {
       const token = await user.getIdToken()
+      const response = await fetch('/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const notifs = data || []
+        
+        // Sort: unread first, then by timestamp
+        const sortedNotifs = notifs.sort((a: Notification, b: Notification) => {
+          if (a.read !== b.read) {
+            return a.read ? 1 : -1
+          }
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        })
+        
+        setNotifications(sortedNotifs)
+        setUnreadIds(sortedNotifs.filter((n: Notification) => !n.read).map((n: Notification) => n.id))
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const markAllAsRead = async () => {
+    if (unreadIds.length === 0) return
+    
+    try {
+      const token = await user?.getIdToken()
       await fetch('/api/notifications', {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          notificationIndex: index
-        })
+        }
       })
-      
-      // Remove the notification from local state
-      setNotifications((prev) => prev.filter((_, i) => i !== index))
-
-      // If notification has sessionId, navigate to it
-      if (notif.sessionId) {
-        window.location.href = `/dashboard/sessions/${notif.sessionId}`
-      }
     } catch (error) {
-      console.error('Error deleting notification:', error)
+      console.error('Error marking notifications as read:', error)
+    }
+  }
+
+  const handleClick = (notif: Notification) => {
+    if (notif.sessionId) {
+      window.location.href = `/dashboard/sessions`
     }
   }
 
@@ -86,19 +123,28 @@ const NotificationsPage: React.FC = () => {
     <div className='min-h-screen w-full px-4 py-8 darkbg lightbg'>
       <div className='max-w-4xl mx-auto'>
         <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white mb-6'>Notifications</h1>
+          <div className='flex items-center gap-3 mb-6'>
+            <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>Notifications</h1>
+            {unreadIds.length > 0 && (
+              <span className="bg-red-500 text-white text-sm px-2 py-1 rounded-full">
+                {unreadIds.length} new
+              </span>
+            )}
+          </div>
           
           {notifications.length === 0 ? (
             <div className='text-center py-12'>
-              <p className='text-gray-500 dark:text-gray-400'>No notifications yet</p>
+              <p className='text-gray-500 dark:text-gray-400'>No notifications</p>
             </div>
           ) : (
             <div className='space-y-3'>
               {notifications.map((notif, index) => (
                 <div
                   key={index}
-                  onClick={() => handleClick(notif, index)}
-                  className='cursor-pointer'
+                  onClick={() => handleClick(notif)}
+                  className={`cursor-pointer transition-colors ${
+                    !notif.read ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 pl-4' : ''
+                  }`}
                 >
                   <NotifCard notification={notif} />
                 </div>

@@ -160,7 +160,7 @@ function ChatPage() {
   }
 
   return (
-    <div className='h-screen flex flex-col darkbg lightbg'>
+    <div className='h-screen  flex flex-col darkbg lightbg'>
       {/* Chat Header */}
       <div className='bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3'>
         <div className='flex items-center justify-between'>

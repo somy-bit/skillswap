@@ -44,7 +44,6 @@ export async function PATCH(request: NextRequest) {
   try {
     const decodedToken = await verifyToken(request);
     const uid = decodedToken.uid;
-    const { notificationIndex } = await request.json();
     
     const notifRef = adminDb.collection('notifications').doc(uid);
     const doc = await notifRef.get();
@@ -55,28 +54,25 @@ export async function PATCH(request: NextRequest) {
     
     const data = doc.data();
     const notifications = data?.notifications || [];
+    const now = new Date();
+    const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
     
-    // Find the notification by index in the unseen notifications array
-    const unseenNotifications = notifications.filter((notif: any) => !notif.seen);
-    
-    if (notificationIndex >= 0 && notificationIndex < unseenNotifications.length) {
-      const targetNotification = unseenNotifications[notificationIndex];
-      
-      // Remove the notification from the array instead of marking as seen
-      const updatedNotifications = notifications.filter((notif: any) => 
-        notif.timestamp !== targetNotification.timestamp || 
-        notif.message !== targetNotification.message
-      );
-      
-      await notifRef.update({
-        notifications: updatedNotifications,
-        updatedAt: new Date()
+    // Mark all notifications as seen and filter out old seen ones
+    const updatedNotifications = notifications
+      .map((notif: any) => ({ ...notif, seen: true }))
+      .filter((notif: any) => {
+        const notifDate = notif.timestamp.toDate();
+        return !notif.seen || notifDate > threeDaysAgo;
       });
-    }
+    
+    await notifRef.update({
+      notifications: updatedNotifications,
+      updatedAt: now
+    });
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating notification:', error);
+    console.error('Error updating notifications:', error);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 }

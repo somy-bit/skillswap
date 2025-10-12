@@ -1,6 +1,7 @@
 import { Profile } from '@/types/type';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { ConnectionButton } from './ConnectionButton';
 
 const occupationColors = {
   'Technology & IT': 'border-blue-500',
@@ -22,14 +23,18 @@ export default function UserCard({ profile }: UserCardProps) {
   const router = useRouter();
   const borderColor = occupationColors[profile.occupation] || 'border-gray-400';
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on connection button
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
     router.push(`/profile/${profile.id}`);
   };
 
   return (
     <div 
       onClick={handleClick}
-      className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 pt-16 max-w-sm mx-auto cursor-pointer hover:shadow-xl transition-shadow duration-300"
+      className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 pt-16 pb-4 max-w-sm mx-auto cursor-pointer hover:shadow-xl transition-shadow duration-300 min-h-[320px] flex flex-col mb-16"
     >
       {/* Profile Image - Half outside card */}
       <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
@@ -45,7 +50,7 @@ export default function UserCard({ profile }: UserCardProps) {
       </div>
 
       {/* Content */}
-      <div className="text-center mt-4">
+      <div className="text-center mt-4 flex-1">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
           {profile.name}
         </h3>
@@ -81,13 +86,18 @@ export default function UserCard({ profile }: UserCardProps) {
         
         {/* Rating */}
         {profile.rating && (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center mb-4">
             <span className="text-yellow-500">★</span>
             <span className="text-sm text-gray-600 dark:text-gray-300 ml-1">
               {profile.rating.toFixed(1)}
             </span>
           </div>
         )}
+      </div>
+
+      {/* Connection Button - Always at bottom of card */}
+      <div className="mt-auto">
+        <ConnectionButton userId={profile.id} className="w-full" />
       </div>
     </div>
   );
