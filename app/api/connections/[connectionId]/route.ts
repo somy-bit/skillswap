@@ -13,14 +13,16 @@ async function verifyToken(request: NextRequest) {
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { connectionId: string } }
+  request: NextRequest
 ) {
   try {
     const decodedToken = await verifyToken(request);
     const uid = decodedToken.uid;
     const { action } = await request.json();
-    const { connectionId } = params;
+    
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const connectionId = segments[segments.length - 1];
 
     if (!['accept', 'reject'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -61,13 +63,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { connectionId: string } }
+  request: NextRequest
 ) {
   try {
     const decodedToken = await verifyToken(request);
     const uid = decodedToken.uid;
-    const { connectionId } = params;
+    
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const connectionId = segments[segments.length - 1];
 
     // Get the connection
     const connectionDoc = await adminDb.collection('connections').doc(connectionId).get();
