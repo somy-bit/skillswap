@@ -67,7 +67,9 @@ const NotificationsPage: React.FC = () => {
           if (a.read !== b.read) {
             return a.read ? 1 : -1
           }
-          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          const aTime = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp as any).getTime()
+          const bTime = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp as any).getTime()
+          return bTime - aTime
         })
         
         setNotifications(sortedNotifs)
@@ -98,9 +100,7 @@ const NotificationsPage: React.FC = () => {
   }
 
   const handleClick = (notif: Notification) => {
-    if (notif.sessionId) {
-      window.location.href = `/dashboard/sessions`
-    }
+    // Removed - navigation now handled by buttons in NotifCard
   }
 
   if (!user) {
@@ -141,8 +141,7 @@ const NotificationsPage: React.FC = () => {
               {notifications.map((notif, index) => (
                 <div
                   key={index}
-                  onClick={() => handleClick(notif)}
-                  className={`cursor-pointer transition-colors ${
+                  className={`transition-colors ${
                     !notif.read ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 pl-4' : ''
                   }`}
                 >

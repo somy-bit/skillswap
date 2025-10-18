@@ -49,17 +49,27 @@ export async function GET(request: NextRequest) {
       sentAt: doc.data().createdAt
     }));
 
-    // Get pending requests received by user
+    // Get pending requests received by user with profile data
     const receivedRequestsSnap = await adminDb.collection('connections')
       .where('receiverId', '==', uid)
       .where('status', '==', 'pending')
       .get();
 
-    const receivedRequests = receivedRequestsSnap.docs.map(doc => ({
-      id: doc.id,
-      senderId: doc.data().senderId,
-      sentAt: doc.data().createdAt
-    }));
+    const receivedRequests = await Promise.all(
+      receivedRequestsSnap.docs.map(async (doc) => {
+        const connectionData = doc.data();
+        const profileDoc = await adminDb.collection('profiles').doc(connectionData.senderId).get();
+        const profile = profileDoc.exists ? profileDoc.data() : null;
+        
+        return {
+          id: doc.id,
+          senderId: connectionData.senderId,
+          senderName: profile?.name || 'Unknown User',
+          senderAvatar: profile?.avatar,
+          sentAt: connectionData.createdAt
+        };
+      })
+    );
 
     return NextResponse.json({
       connections,

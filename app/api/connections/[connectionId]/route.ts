@@ -12,7 +12,6 @@ async function verifyToken(request: NextRequest) {
   return decodedToken;
 }
 
-// PATCH - Accept or reject connection request
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { connectionId: string } }
@@ -20,47 +19,47 @@ export async function PATCH(
   try {
     const decodedToken = await verifyToken(request);
     const uid = decodedToken.uid;
-    const { action } = await request.json(); // 'accept' or 'reject'
-    
+    const { action } = await request.json();
+    const { connectionId } = params;
+
     if (!['accept', 'reject'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const connectionRef = adminDb.collection('connections').doc(params.connectionId);
-    const connectionDoc = await connectionRef.get();
-
+    // Get the connection request
+    const connectionDoc = await adminDb.collection('connections').doc(connectionId).get();
+    
     if (!connectionDoc.exists) {
-      return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Connection request not found' }, { status: 404 });
     }
 
-    const connectionData = connectionDoc.data()!;
-
-    // Only receiver can accept/reject
-    if (connectionData.receiverId !== uid) {
+    const connectionData = connectionDoc.data();
+    
+    // Verify user is the receiver of this request
+    if (connectionData?.receiverId !== uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    if (connectionData.status !== 'pending') {
-      return NextResponse.json({ error: 'Connection already processed' }, { status: 400 });
+    if (action === 'accept') {
+      // Update connection status to accepted
+      await adminDb.collection('connections').doc(connectionId).update({
+        status: 'accepted',
+        acceptedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      // Delete the connection request
+      await adminDb.collection('connections').doc(connectionId).delete();
     }
 
-    const updateData = {
-      status: action === 'accept' ? 'accepted' : 'rejected',
-      [action === 'accept' ? 'acceptedAt' : 'rejectedAt']: admin.firestore.FieldValue.serverTimestamp()
-    };
-
-    await connectionRef.update(updateData);
-
     return NextResponse.json({ 
-      message: `Connection ${action}ed successfully` 
+      message: `Connection request ${action}ed successfully` 
     });
   } catch (error) {
-    console.error('Error updating connection:', error);
-    return NextResponse.json({ error: 'Failed to update connection' }, { status: 500 });
+    console.error('Error handling connection request:', error);
+    return NextResponse.json({ error: 'Failed to handle connection request' }, { status: 500 });
   }
 }
 
-// DELETE - Remove connection
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { connectionId: string } }
@@ -68,22 +67,24 @@ export async function DELETE(
   try {
     const decodedToken = await verifyToken(request);
     const uid = decodedToken.uid;
+    const { connectionId } = params;
 
-    const connectionRef = adminDb.collection('connections').doc(params.connectionId);
-    const connectionDoc = await connectionRef.get();
-
+    // Get the connection
+    const connectionDoc = await adminDb.collection('connections').doc(connectionId).get();
+    
     if (!connectionDoc.exists) {
       return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
     }
 
-    const connectionData = connectionDoc.data()!;
-
-    // Only participants can delete
-    if (connectionData.senderId !== uid && connectionData.receiverId !== uid) {
+    const connectionData = connectionDoc.data();
+    
+    // Verify user is part of this connection
+    if (connectionData?.senderId !== uid && connectionData?.receiverId !== uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    await connectionRef.delete();
+    // Delete the connection
+    await adminDb.collection('connections').doc(connectionId).delete();
 
     return NextResponse.json({ 
       message: 'Connection removed successfully' 

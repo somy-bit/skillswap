@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { MessageCircle, Search } from 'lucide-react'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import EmptyState from '@/components/ui/EmptyState'
 
 interface Conversation {
   id: string
@@ -73,7 +75,7 @@ function MessagesPage() {
   if (loading) {
     return (
       <div className='min-h-screen w-full px-4 py-8 darkbg lightbg flex items-center justify-center'>
-        <div className='text-lg text-gray-600 dark:text-gray-400'>Loading messages...</div>
+        <LoadingSpinner size="lg" text="Loading messages..." />
       </div>
     )
   }
@@ -109,15 +111,11 @@ function MessagesPage() {
           {/* Conversations List */}
           <div className='divide-y divide-gray-200 dark:divide-gray-700'>
             {filteredConversations.length === 0 ? (
-              <div className='p-8 text-center'>
-                <MessageCircle className='w-12 h-12 text-gray-400 mx-auto mb-4' />
-                <p className='text-gray-600 dark:text-gray-400'>
-                  {searchTerm ? 'No conversations found' : 'No messages yet'}
-                </p>
-                <p className='text-sm text-gray-500 dark:text-gray-500 mt-2'>
-                  Start a conversation by visiting someone's profile
-                </p>
-              </div>
+              <EmptyState
+                icon={MessageCircle}
+                title={searchTerm ? 'No conversations found' : 'No messages yet'}
+                description="Start a conversation by visiting someone's profile"
+              />
             ) : (
               filteredConversations.map((conversation) => (
                 <div

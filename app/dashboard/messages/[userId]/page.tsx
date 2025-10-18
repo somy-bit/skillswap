@@ -160,9 +160,9 @@ function ChatPage() {
   }
 
   return (
-    <div className='h-screen  flex flex-col darkbg lightbg'>
-      {/* Chat Header */}
-      <div className='bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3'>
+    <div className='h-screen flex flex-col max-w-5xl mx-auto'>
+      {/* Chat Header - Sticky */}
+      <div className='sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-3'>
             <button
@@ -192,8 +192,8 @@ function ChatPage() {
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className='flex-1 overflow-y-auto p-4 space-y-4'>
+      {/* Messages Area - Scrollable */}
+      <div className='flex-1 overflow-y-auto p-4 space-y-4 pb-20 bg-white dark:bg-gray-900'>
         {messages.length === 0 ? (
           <div className='text-center py-8'>
             <p className='text-gray-500 dark:text-gray-400'>
@@ -239,8 +239,8 @@ function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className='bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4'>
+      {/* Message Input - Sticky Bottom */}
+      <div className='sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4'>
         <div className='flex items-center space-x-3'>
           <div className='flex-1 relative'>
             <textarea

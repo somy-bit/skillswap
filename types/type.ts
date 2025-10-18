@@ -98,6 +98,7 @@ export type Notification = {
   message: string,
   timestamp: Timestamp,
   seen: boolean,
+  read?: boolean, // Add read property
   sessionId?: string, // e.g., sessionId or message thread
   id?: string,
 }

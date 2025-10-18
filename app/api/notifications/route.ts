@@ -27,13 +27,16 @@ export async function GET(request: NextRequest) {
     const data = doc.data();
     const notifications = data?.notifications || [];
     
-    // Only return unseen notifications
-    const unseenNotifications = notifications.filter((notif: any) => !notif.seen);
-    console.log("Unseen notifications:", unseenNotifications);
-    // Sort by timestamp (newest first)
-    unseenNotifications.sort((a: any, b: any) => b.timestamp.toDate() - a.timestamp.toDate());
+    // Return all notifications with read status based on seen
+    const allNotifications = notifications.map((notif: any) => ({
+      ...notif,
+      read: notif.seen || false
+    }));
     
-    return NextResponse.json(unseenNotifications);
+    // Sort by timestamp (newest first)
+    allNotifications.sort((a: any, b: any) => b.timestamp.toDate() - a.timestamp.toDate());
+    
+    return NextResponse.json(allNotifications);
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

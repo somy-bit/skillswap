@@ -2,7 +2,7 @@
 
 import {  Calendar1Icon, HomeIcon, ListCheckIcon, LogInIcon,  UserIcon, MessageCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import ToggleDarkMode from './ToggleDarkMode'
 import LogoutBtn from './LogoutBtn';
 import UserAvatar from './UserAvatar';
@@ -17,6 +17,18 @@ function Header() {
     const router = useRouter();
    
     const [openMenu, setOpenMenu] = useState(false);
+    const drawerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (openMenu && drawerRef.current && !drawerRef.current.contains(event.target as Node)) {
+                setOpenMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [openMenu]);
  
 
     return (
@@ -48,7 +60,7 @@ function Header() {
                 </div>
             </header>
 
-            <div className={`fixed top-0 right-0 transition-transform duration-500 ease-in-out transform ${openMenu ? "translate-x-0" : "translate-x-full "
+            <div ref={drawerRef} className={`fixed top-0 right-0 transition-transform duration-500 ease-in-out transform ${openMenu ? "translate-x-0" : "translate-x-full "
                 } h-screen w-full md:w-1/2 lg:w-1/3 mid-lightbg mid-darkbg z-40`}>
                 <div className=' mt-[70px]'>
 

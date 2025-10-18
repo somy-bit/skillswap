@@ -31,6 +31,19 @@ const NotifCard: React.FC<NotificationCardProps> = ({ notification }) => {
         return new Date(timestamp).toLocaleString()
     }
 
+    // Get button link and text based on notification type
+    const getActionButton = () => {
+        if (type === 'message') {
+            return { href: '/dashboard/messages', text: 'View Messages' }
+        }
+        if (['booking', 'session_confirmed', 'session_cancelled', 'session_completed'].includes(type)) {
+            return { href: '/dashboard/sessions', text: 'View Sessions' }
+        }
+        return null
+    }
+
+    const actionButton = getActionButton()
+
     const cardContent = (
         <div className={`flex items-center space-x-4 bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 w-full transition-shadow duration-300 hover:shadow-lg ${seen ? 'opacity-75' : 'ring-2 ring-blue-400'}`}>
             {/* Icon based on type */}
@@ -50,6 +63,15 @@ const NotifCard: React.FC<NotificationCardProps> = ({ notification }) => {
                     {formatTimestamp()}
                 </span>
             </div>
+
+            {/* Action Button */}
+            {actionButton && (
+                <Link href={actionButton.href}>
+                    <button className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-md transition-colors">
+                        {actionButton.text}
+                    </button>
+                </Link>
+            )}
 
             {/* Unread indicator */}
             {!seen && (

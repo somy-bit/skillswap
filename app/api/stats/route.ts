@@ -36,11 +36,19 @@ export async function GET(request: NextRequest) {
     const lastWeek = getWeekRange(lastWeekStart);
 
     // Get all data in parallel
-    const [profilesSnap, sessionsSnap, messagesSnap] = await Promise.all([
-      adminDb.collection('profiles').get(),
+    const [connectionsSnap, sessionsSnap, messagesSnap, connectionRequestsSnap] = await Promise.all([
+      adminDb.collection('connections').where('status', '==', 'accepted').get(),
       adminDb.collection('sessions').get(),
-      adminDb.collection('messages').where('receiverId', '==', uid).where('read', '==', false).get()
+      adminDb.collection('messages').where('receiverId', '==', uid).where('read', '==', false).get(),
+      adminDb.collection('connections').where('receiverId', '==', uid).where('status', '==', 'pending').get()
     ]);
+
+    // Count user's actual connections
+    const userConnections = connectionsSnap.docs.filter(doc => {
+      const data = doc.data();
+      return data.senderId === uid || data.receiverId === uid;
+    });
+    const totalConnections = userConnections.length;
 
     // Filter sessions for current user and weeks
     const userSessions = sessionsSnap.docs.filter(doc => {
@@ -84,14 +92,15 @@ export async function GET(request: NextRequest) {
 
     const sessionDifference = thisWeekSessions - lastWeekSessions;
     const unreadMessages = messagesSnap.size;
-    const totalConnections = profilesSnap.size;
+    const pendingConnectionRequests = connectionRequestsSnap.size;
 
     const stats = {
       totalConnections,
       thisWeekSessions,
       lastWeekSessions,
       sessionDifference,
-      unreadMessages
+      unreadMessages,
+      pendingConnectionRequests
     };
 
     return NextResponse.json(stats);

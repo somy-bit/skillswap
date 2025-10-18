@@ -8,6 +8,7 @@ interface Stats {
   lastWeekSessions: number;
   sessionDifference: number;
   unreadMessages: number;
+  pendingConnectionRequests: number;
 }
 
 interface UseStatsReturn {

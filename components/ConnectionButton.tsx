@@ -9,15 +9,16 @@ interface ConnectionButtonProps {
 }
 
 export function ConnectionButton({ userId, className = '' }: ConnectionButtonProps) {
-  const { connections, sentRequests, sendConnectionRequest } = useConnections();
+  const { connections, sentRequests, sendConnectionRequest, removeConnection } = useConnections();
   const [isLoading, setIsLoading] = useState(false);
 
   // Check connection status
-  const isConnected = connections.some(conn => conn.connectedUserId === userId);
+  const connection = connections.find(conn => conn.connectedUserId === userId);
+  const isConnected = !!connection;
   const hasPendingRequest = sentRequests.some(req => req.receiverId === userId);
 
   const handleConnect = async () => {
-    if (isConnected || hasPendingRequest || isLoading) return;
+    if (hasPendingRequest || isLoading) return;
 
     try {
       setIsLoading(true);
@@ -29,14 +30,28 @@ export function ConnectionButton({ userId, className = '' }: ConnectionButtonPro
     }
   };
 
+  const handleDisconnect = async () => {
+    if (!connection || isLoading) return;
+
+    try {
+      setIsLoading(true);
+      await removeConnection(connection.id);
+    } catch (error) {
+      console.error('Failed to disconnect:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isConnected) {
     return (
       <button
-        disabled
-        className={`flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg ${className}`}
+        onClick={handleDisconnect}
+        disabled={isLoading}
+        className={`flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg disabled:opacity-50 ${className}`}
       >
-        <UserCheck size={16} />
-        Connected
+        <UserX size={16} />
+        {isLoading ? 'Disconnecting...' : 'Disconnect'}
       </button>
     );
   }

@@ -1,64 +1,71 @@
 'use client'
 import React, { useState, useEffect, useMemo } from 'react'
-import UserCard from '@/components/UserCard';
 import { useAuth } from "@/contexts/AuthContext";
 import { Profile } from '@/types/type';
-import StatsCard from '@/components/dashboard/StatsCard';
-import QuickActions from '@/components/dashboard/QuickActions';
-import RecentActivity from '@/components/dashboard/RecentActivity';
-import SkillsOverview from '@/components/dashboard/SkillsOverview';
-import UpcomingSessions from '@/components/dashboard/UpcomingSessions';
-import { Users, Calendar, MessageSquare, TrendingUp, Filter } from 'lucide-react';
 import { useStats } from '@/lib/hooks/useStats';
+import ConnectionRequestsDialog from '@/components/dashboard/ConnectionRequestsDialog';
+import StatsSection from '@/components/dashboard/StatsSection';
+import DashboardContent from '@/components/dashboard/DashboardContent';
+import DiscoverSection from '@/components/dashboard/DiscoverSection';
 
 function Dashboard() {
     const { user } = useAuth();
-    const { data: stats, loading: statsLoading, error: statsError } = useStats();
+    const { data: stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useStats();
     const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [lastDoc, setLastDoc] = useState<any>(null);
+    const [connectionRequestsOpen, setConnectionRequestsOpen] = useState(false);
     const [occupationFilter, setOccupationFilter] = useState('');
     const [experienceFilter, setExperienceFilter] = useState('');
     const [locationFilter, setLocationFilter] = useState('');
-    const [displayCount, setDisplayCount] = useState(8);
     const [showFilters, setShowFilters] = useState(false);
 
-    const occupations = [
-        'Technology & IT',
-        'Business & Finance',
-        'Education & Training',
-        'Health & Wellness',
-        'Creative & Design',
-        'Science & Research',
-        'Legal & Government',
-        'Hospitality & Service',
-        'Lifestyle & Personal Development'
-    ];
-
-    const locations = [
-        'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ',
-        'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA', 'Dallas, TX', 'San Jose, CA',
-        'Austin, TX', 'Jacksonville, FL', 'Fort Worth, TX', 'Columbus, OH', 'Charlotte, NC',
-        'San Francisco, CA', 'Indianapolis, IN', 'Seattle, WA', 'Denver, CO', 'Washington, DC',
-        'Boston, MA', 'El Paso, TX', 'Nashville, TN', 'Detroit, MI', 'Oklahoma City, OK',
-        'Portland, OR', 'Las Vegas, NV', 'Memphis, TN', 'Louisville, KY', 'Baltimore, MD'
-    ];
-
-    // Fetch all profiles once
-    useEffect(() => {
-        const fetchProfiles = async () => {
-            try {
-                const response = await fetch('/api/profiles');
-                const data = await response.json();
-                setAllProfiles(data);
-            } catch (error) {
-                console.error('Error fetching profiles:', error);
-            } finally {
-                setLoading(false);
+    const fetchProfiles = async (loadMore = false) => {
+        if (!user) return;
+        
+        try {
+            if (!loadMore) {
+                setLoading(true);
+                setAllProfiles([]);
+                setLastDoc(null);
+            } else {
+                setLoadingMore(true);
             }
-        };
 
+            const token = await user.getIdToken();
+            const url = `/api/profiles?limit=8${lastDoc && loadMore ? `&lastDoc=${lastDoc}` : ''}`;
+            
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            const data = await response.json();
+            
+            if (loadMore) {
+                setAllProfiles(prev => [...prev, ...data.profiles]);
+            } else {
+                setAllProfiles(data.profiles);
+            }
+            
+            setLastDoc(data.lastDoc);
+            setHasMore(data.hasMore);
+        } catch (error) {
+            console.error('Error fetching profiles:', error);
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    useEffect(() => {
         fetchProfiles();
-    }, []);
+    }, [user]);
+
+    const loadMore = () => {
+        fetchProfiles(true);
+    };
 
     // Filter profiles
     const filteredProfiles = useMemo(() => {
@@ -69,10 +76,10 @@ function Dashboard() {
         }
         
         if (experienceFilter) {
-            const minExp = parseInt(experienceFilter);
-            filtered = filtered.filter(profile => profile.experience >= minExp);
+            const minExperience = parseInt(experienceFilter);
+            filtered = filtered.filter(profile => profile.experience >= minExperience);
         }
-
+        
         if (locationFilter) {
             filtered = filtered.filter(profile => profile.location === locationFilter);
         }
@@ -80,199 +87,56 @@ function Dashboard() {
         return filtered;
     }, [allProfiles, user?.email, occupationFilter, experienceFilter, locationFilter]);
 
-    // Reset display count when filters change
-    useEffect(() => {
-        setDisplayCount(8);
-    }, [occupationFilter, experienceFilter, locationFilter]);
-
-    // Get profiles to display (lazy loaded)
-    const displayedProfiles = filteredProfiles.slice(0, displayCount);
-    const hasMore = displayCount < filteredProfiles.length;
-
-    const loadMore = () => {
-        setDisplayCount(prev => prev + 8);
-    };
+    // Get profiles to display (all loaded profiles, filtered)
+    const displayedProfiles = filteredProfiles;
 
     return (
         <div className='min-h-screen w-full px-4 py-8 darkbg lightbg'>
             <div className='max-w-7xl mx-auto'>
                 {/* Welcome Section */}
-                <div className='text-center mb-8'>
-                    <h1 className='text-4xl font-bold text-gray-900 dark:text-white mb-2'>
-                        Welcome back, {user?.displayName || 'Learner'}! 👋
+                <div className='mb-8'>
+                    <h1 className='text-3xl font-bold text-gray-900 dark:text-white mb-2'>
+                        Welcome back, {user?.displayName?.split(' ')[0] || 'User'}! 👋
                     </h1>
-                    <p className='text-lg text-gray-600 dark:text-gray-300'>
-                        Ready to learn something new today?
+                    <p className='text-gray-600 dark:text-gray-300'>
+                        Here's what's happening with your skill swapping journey today.
                     </p>
                 </div>
 
                 {/* Stats Cards */}
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
-                    {statsLoading ? (
-                        // Skeleton loading
-                        [...Array(4)].map((_, i) => (
-                            <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border animate-pulse">
-                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-3/4"></div>
-                                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/2"></div>
-                                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-                            </div>
-                        ))
-                    ) : statsError ? (
-                        <div className="col-span-4 bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-red-600">Failed to load stats</p>
-                        </div>
-                    ) : stats ? (
-                        <>
-                            <StatsCard
-                                title="Total Connections"
-                                value={stats.totalConnections}
-                                icon={Users}
-                                trend={`${stats.totalConnections} profiles`}
-                                color="bg-blue-500"
-                            />
-                            <StatsCard
-                                title="Sessions This Week"
-                                value={stats.thisWeekSessions}
-                                icon={Calendar}
-                                trend={`${stats.sessionDifference >= 0 ? '+' : ''}${stats.sessionDifference} from last week`}
-                                color="bg-green-500"
-                            />
-                            <StatsCard
-                                title="Messages"
-                                value={stats.unreadMessages}
-                                icon={MessageSquare}
-                                trend={`${stats.unreadMessages} unread`}
-                                color="bg-purple-500"
-                            />
-                            <StatsCard
-                                title="Weekly Growth"
-                                value={stats.sessionDifference >= 0 ? `+${stats.sessionDifference}` : stats.sessionDifference}
-                                icon={TrendingUp}
-                                trend={stats.sessionDifference >= 0 ? "Growing!" : "Keep going!"}
-                                color="bg-orange-500"
-                            />
-                        </>
-                    ) : null}
-                </div>
+                <StatsSection
+                    stats={stats}
+                    loading={statsLoading}
+                    error={statsError}
+                    onConnectionsClick={() => setConnectionRequestsOpen(true)}
+                />
 
                 {/* Main Content Grid */}
-                <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8'>
-                    {/* Left Column */}
-                    <div className='lg:col-span-2 space-y-6'>
-                        <QuickActions />
-                        <UpcomingSessions />
-                    </div>
-                    
-                    {/* Right Column */}
-                    <div className='space-y-6'>
-                        <SkillsOverview />
-                        <RecentActivity />
-                    </div>
-                </div>
+                <DashboardContent />
 
                 {/* Discover Section */}
-                <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8'>
-                    <div className='flex items-center justify-between mb-24'>
-                        <div>
-                            <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-2'>
-                                Discover Mentors
-                            </h2>
-                            <p className='text-gray-600 dark:text-gray-300'>
-                                Connect with {filteredProfiles.length} talented professionals
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className='flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors'
-                        >
-                            <Filter className='w-4 h-4' />
-                            <span>Filters</span>
-                        </button>
-                    </div>
-
-                    {/* Filters */}
-                    {showFilters && (
-                        <div className='bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6'>
-                            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                                <div>
-                                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                                        Occupation
-                                    </label>
-                                    <select
-                                        value={occupationFilter}
-                                        onChange={(e) => setOccupationFilter(e.target.value)}
-                                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
-                                    >
-                                        <option value="">All Occupations</option>
-                                        {occupations.map(occupation => (
-                                            <option key={occupation} value={occupation}>{occupation}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                                        Experience Level
-                                    </label>
-                                    <select
-                                        value={experienceFilter}
-                                        onChange={(e) => setExperienceFilter(e.target.value)}
-                                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
-                                    >
-                                        <option value="">Any Experience</option>
-                                        <option value="1">1+ Years</option>
-                                        <option value="3">3+ Years</option>
-                                        <option value="5">5+ Years</option>
-                                        <option value="10">10+ Years</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                                        Location
-                                    </label>
-                                    <select
-                                        value={locationFilter}
-                                        onChange={(e) => setLocationFilter(e.target.value)}
-                                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
-                                    >
-                                        <option value="">All Locations</option>
-                                        {locations.map(location => (
-                                            <option key={location} value={location}>{location}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Profiles Grid */}
-                    {loading ? (
-                        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-                            {[...Array(8)].map((_, i) => (
-                                <div key={i} className='bg-gray-200 dark:bg-gray-700 rounded-lg h-64 animate-pulse'></div>
-                            ))}
-                        </div>
-                    ) : (
-                        <>
-                            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 space-y-10 gap-6'>
-                                {displayedProfiles.map((profile, index) => (
-                                    <UserCard key={profile.email || index} profile={profile} />
-                                ))}
-                            </div>
-                            
-                            {hasMore && (
-                                <div className='text-center mt-8'>
-                                    <button
-                                        onClick={loadMore}
-                                        className='px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors'
-                                    >
-                                        Load More Profiles
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
+                <DiscoverSection
+                    profiles={displayedProfiles}
+                    loading={loading}
+                    hasMore={hasMore}
+                    loadingMore={loadingMore}
+                    showFilters={showFilters}
+                    occupationFilter={occupationFilter}
+                    experienceFilter={experienceFilter}
+                    locationFilter={locationFilter}
+                    onToggleFilters={() => setShowFilters(!showFilters)}
+                    onOccupationChange={setOccupationFilter}
+                    onExperienceChange={setExperienceFilter}
+                    onLocationChange={setLocationFilter}
+                    onLoadMore={loadMore}
+                />
             </div>
+
+            <ConnectionRequestsDialog
+                isOpen={connectionRequestsOpen}
+                onClose={() => setConnectionRequestsOpen(false)}
+                onRequestHandled={refetchStats}
+            />
         </div>
     );
 }

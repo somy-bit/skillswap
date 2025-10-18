@@ -97,7 +97,7 @@ export default function UserCard({ profile }: UserCardProps) {
 
       {/* Connection Button - Always at bottom of card */}
       <div className="mt-auto">
-        <ConnectionButton userId={profile.id} className="w-full" />
+        <ConnectionButton userId={profile.id || ''} className="w-full" />
       </div>
     </div>
   );
