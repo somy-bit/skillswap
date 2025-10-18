@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
       const data = doc.data()
       const otherUserId = data.participants.filter((id: string) => id !== userId)
       const otherId=otherUserId[0]
-      console.log("otherUserId",  otherId,data.participants);
-      console.log('conversation doc:', doc.id, data)
+      // console.log("otherUserId",  otherId,data.participants);
+      // console.log('conversation doc:', doc.id, data)
       // Get other user's profile
       const userDoc = await adminDb.collection('profiles').doc(otherId).get()
       const userData = userDoc.data()

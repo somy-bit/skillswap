@@ -78,7 +78,7 @@ export default function SessionsPage() {
       
       if (swapResponse.ok && swapResponse.status === 200) {
         const data = await swapResponse.json();
-        console.log("data",data)
+        // console.log("data",data)
         
         setAsMenteeSessions(data.asMentee.filter((session:Session)=>session.status==="pending") || []);
         setAsMentorSessions(data.asMentor.filter((session:Session)=>session.status==='pending') || []);

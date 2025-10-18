@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     if (!doc.exists) {
       return NextResponse.json([]);
     }
-    console.log("Notification doc:",  doc.data());
+    // console.log("Notification doc:",  doc.data());
     const data = doc.data();
     const notifications = data?.notifications || [];
     

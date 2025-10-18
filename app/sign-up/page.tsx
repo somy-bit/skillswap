@@ -127,7 +127,7 @@ function SignUp() {
                 toast.error("Sorry! there was a problem in server, please try again later")
             }
         } catch (error) {
-            console.log(error);
+            // console.log(error);
             toast.error("Sorry! there was a problem in server, please try again later")
         }
         finally {

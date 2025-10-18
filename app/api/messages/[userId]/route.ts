@@ -18,8 +18,8 @@ export async function GET(
      const url = new URL(request.url);                // safe in all runtimes
      const segments = url.pathname.split("/").filter(Boolean);
      const id = segments[segments.length - 1]; // get the last segment
-     console.log("otherUserId", id);
-     console.log("id", id);
+     // console.log("otherUserId", id);
+     // console.log("id", id);
     // Find or create conversation
     const conversationId = [currentUserId, id].sort().join('_')
     

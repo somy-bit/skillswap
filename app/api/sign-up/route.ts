@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const image = formData.get("image") as File | null;
         const profileDataString = formData.get("profileData") as string;
-        console.log('signup', profileDataString)
+        // console.log('signup', profileDataString)
         const profileData = JSON.parse(profileDataString)
         const { email, password, name } = profileData;
 

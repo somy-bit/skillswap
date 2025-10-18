@@ -22,7 +22,7 @@ export async function GET(
 
     const segments = url.pathname.split("/");
     const userId = segments[segments.length - 1];
-    console.log('user in slot route ', userId)
+    // console.log('user in slot route ', userId)
     if (!userId) {
       return NextResponse.json({ message: "unAuthorized" }, { status: 401 })
     }
@@ -31,7 +31,7 @@ export async function GET(
     const doc = await slotsRef.get();
 
     if (!doc.exists) {
-      console.log("no slot for user ", userId)
+      // console.log("no slot for user ", userId)
       return NextResponse.json([]);
     }
 
@@ -45,7 +45,7 @@ export async function GET(
       const slotDate = new Date(slot.date + 'T00:00:00');
       return slotDate >= today;
     });
-    console.log(currentSlots)
+    // console.log(currentSlots)
     return NextResponse.json(currentSlots);
   } catch (error) {
     console.error('Error fetching slots:', error);
